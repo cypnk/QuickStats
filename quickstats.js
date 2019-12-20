@@ -18,10 +18,29 @@
 	pkg.limit	= 2000;
 	
 	// Stats collection URL
-	pkg.url	= 'https://example.com/stats';
+	pkg.url		= 'https://example.com/stats';
+	
+	// This file's name
+	pkg.file	= 'stats.js';
 	
 	// Stats package version for internal use
-	pkg.version		= '0.1';
+	pkg.version	= '0.1';
+	
+	
+	// Base settings
+	pkg.load	= Date.now();
+	pkg.host	= window.location.host;
+	pkg.pathname	= window.location.pathname;
+	pkg.hash	= window.location.hash;
+	pkg.referrer	= document.referrer;
+	pkg.useragent	= navigator.userAgent	|| '';
+	pkg.platform	= navigator.platform	|| '';
+	pkg.screen	= 
+	[
+		window.screen.width, 
+		window.screen.height,
+		window.screen.pixelDepth
+	];
 	
 	const
 	find	= ( se, el, nl ) => {
@@ -31,6 +50,36 @@
 			return qr[0];
 		}
 		return qr;
+	},
+	token	= () => { // stats.js?uniquetoken
+		const
+		sc	= find( 'script' ),
+		ln	= sc.length;
+		
+		// This is very odd
+		if ( !ln ) { return ''; }
+		
+		var 
+		t	= '',
+		f	= '';
+		for( var i = 0; i < ln; i++ ) {
+			f = 
+			sc[i].src.replace( /^.*[\\\/]/, '' )
+				.split( '?' );
+			if ( f[0] == pkg.file ) {
+				t = f[1] || '';
+				break;
+			}
+		}
+		
+		var sh		= 0;
+		const ua	=  pkg.useragent + t;
+		for ( let i = 0; i < ua.length; i++ ) {
+			sh = ( sh * 31 ) + ua.charCodeAt( i );
+			sh |= 0;
+		}
+		
+		return btoa( '' + sh );
 	},
 	listen	= ( tg, ev, fn, ca ) => {
 		const
@@ -85,7 +134,7 @@
 		for( var i = 0; i < ln; i++ ) {
 			const n = {};
 			
-			n.node		= el[i].nodeName;
+			n.node		= el[i].nodeName.toLowerCase();
 			n.events	= el[i].events || [];
 			
 			ev.push( n );
@@ -105,19 +154,7 @@
 		xhr.send( JSON.stringify( pkg ) );
 	};
 	
-	pkg.load	= Date.now();
-	pkg.host	= window.location.host;
-	pkg.pathname	= window.location.pathname;
-	pkg.hash	= window.location.hash;
-	pkg.referrer	= document.referrer;
-	pkg.useragent	= navigator.userAgent || '';
-	pkg.platform	= navigator.platform || '';
-	pkg.screen	= 
-	[
-		window.screen.width, 
-		window.screen.height,
-		window.screen.pixelDepth
-	];
+	pkg.token	= token();
 	
 	hearall( pkg.subjects );
 	listen( window, 'beforeunload', ( e ) => {
