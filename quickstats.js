@@ -142,19 +142,19 @@
 		return ev;
 	},
 	send	= () => {
+		const
+		frm		= new FormData(),
+		xhr		= new XMLHttpRequest();
+		
+		xhr.timeout	= pkg.limit;
 		pkg.events	= collect();
 		
-		const xhr	= new XMLHttpRequest();
-		xhr.timeout	= pkg.limit;
+		frm.append( 'stats', JSON.stringify( pkg ) );
+		frm.append( 'token', token() );
+		
 		xhr.open( 'POST', pkg.url, true );
-		xhr.setRequestHeader( 
-			'Content-Type', 
-			'application/x-www-form-urlencoded; charset=UTF-8'
-		);
-		xhr.send( JSON.stringify( pkg ) );
+		xhr.send( frm );
 	};
-	
-	pkg.token	= token();
 	
 	hearall( pkg.subjects );
 	listen( window, 'beforeunload', ( e ) => {
