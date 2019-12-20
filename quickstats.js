@@ -158,7 +158,9 @@
 	
 	hearall( pkg.subjects );
 	listen( window, 'beforeunload', ( e ) => {
+		e.preventDefault();
 		send();
+		e.returnValue = '';
 	}, true );
 })();
 
