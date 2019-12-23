@@ -6,13 +6,15 @@
 	
 	const pkg	= {};
 	
-	// List of elements to track
-	pkg.subjects	=
-	'a, p, li, img, h1, input[type="text"], input[type="range"], textarea';
-	
-	// List of tracking events
-	pkg.track	=
-	'click, mouseover, mouseout, focus, blur, selectionchange';
+	// List of elements and associated events to track
+	pkg.observe	= [
+		[ 'a', 'click, mousenter, mouseleave, focus' ],
+		[ 'p', 'wheel, select' ],
+		[ 'li, img, h1', 'mouseenter, mouseleave' ],
+		[ 'input[type="text"]', 'mouseover, mouseout, focus, blur, invalid' ],
+		[ 'input[type="range"]', 'mouseover, mouseout, focus, change' ],
+		[ 'textarea', 'mouseenter, mouseleave, focus, change, invalid' ]
+	];
 	
 	// Timeout
 	pkg.limit	= 2000;
@@ -91,10 +93,10 @@
 			tg.addEventListener( ve[i], fn, ca );
 		}
 	},
-	record	= ( el, i ) => {
+	record	= ( el, ev, i ) => {
 		el.events	= [];
 		
-		listen( el, pkg.track, ( e ) => {
+		listen( el, ev, ( e ) => {
 			var txt = 
 			document.getSelection ? 
 				document.getSelection().toString() : 
@@ -112,15 +114,17 @@
 		
 		el.setAttribute( 'data-stats', '1' );
 	},
-	hearall	= ( tg, ev, fn ) => {
-		const
-		el	= find( tg ),
-		ln	= el.length;
-		
-		if ( !ln ) { return; }
-		
-		for( var i = 0; i < ln; i++ ) {
-			record( el[i], i );
+	hearall	= ( tg ) => {
+		for ( var i = 0; i < tg.length; i++ ) {
+			const
+			el	= find( tg[i][0] ),
+			ln	= el.length;
+			
+			if ( !ln ) { continue; }
+			
+			for( var j = 0; j < ln; j++ ) {
+				record( el[j], tg[i][1], j );
+			}
 		}
 	},
 	collect = () => {
@@ -156,11 +160,11 @@
 		xhr.send( frm );
 	};
 	
-	hearall( pkg.subjects );
+	hearall( pkg.observe );
 	listen( window, 'beforeunload', ( e ) => {
-		e.preventDefault();
-		send();
 		e.returnValue = '';
+		send();
+		return true;
 	}, true );
 })();
 
