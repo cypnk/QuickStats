@@ -8,16 +8,13 @@
 	
 	// List of elements and associated events to track
 	pkg.observe	= [
-		[ 'a', 'click, mousenter, mouseleave, focus' ],
-		[ 'p', 'wheel, select' ],
+		[ 'a', 'click, mouseover, mouseleave, focus' ],
+		[ 'p', 'wheel, select, mouseenter, mouseleave' ],
 		[ 'li, img, h1', 'mouseenter, mouseleave' ],
 		[ 'input[type="text"]', 'mouseover, mouseout, focus, blur, invalid' ],
 		[ 'input[type="range"]', 'mouseover, mouseout, focus, change' ],
 		[ 'textarea', 'mouseenter, mouseleave, focus, change, invalid' ]
 	];
-	
-	// Timeout
-	pkg.limit	= 2000;
 	
 	// Stats collection URL
 	pkg.url		= 'https://example.com/stats';
@@ -94,10 +91,9 @@
 		}
 	},
 	record	= ( el, ev, i ) => {
-		el.events	= [];
-		
 		listen( el, ev, ( e ) => {
-			var txt = 
+			el.events	= el.events || [];
+			var txt		= 
 			document.getSelection ? 
 				document.getSelection().toString() : 
 				document.selection.createRange().toString();
@@ -136,28 +132,32 @@
 		if ( !ln ) { return ev; }
 		
 		for( var i = 0; i < ln; i++ ) {
-			const n = {};
+			if ( !el[i].events || !el[i].events.length ) {
+				continue; 
+			}
 			
-			n.node		= el[i].nodeName.toLowerCase();
-			n.events	= el[i].events || [];
-			
-			ev.push( n );
+			ev.push( {
+				node: el[i].nodeName.toLowerCase(),
+				events: el[i].events
+			} );
+			el[i].events = [];
 		}
 		return ev;
 	},
-	send	= () => {
-		const
-		frm		= new FormData(),
-		xhr		= new XMLHttpRequest();
+	send	= ( e ) => {
+		const frm	= new FormData();
 		
-		xhr.timeout	= pkg.limit;
 		pkg.events	= collect();
-		
 		frm.append( 'stats', JSON.stringify( pkg ) );
 		frm.append( 'token', token() );
 		
-		xhr.open( 'POST', pkg.url, true );
-		xhr.send( frm );
+		if ( navigator.sendBeacon ) {
+			navigator.sendBeacon( pkg.url, frm );
+		} else {
+			const xhr	= new XMLHttpRequest();
+			xhr.open( 'POST', pkg.url, true );
+			xhr.send( frm );
+		}
 	};
 	
 	hearall( pkg.observe );
