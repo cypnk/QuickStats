@@ -161,7 +161,7 @@
 	};
 	
 	hearall( pkg.observe );
-	listen( window, 'beforeunload', ( e ) => {
+	listen( window, 'visibilitychange, pagehide', ( e ) => {
 		e.returnValue = '';
 		send();
 		return true;
